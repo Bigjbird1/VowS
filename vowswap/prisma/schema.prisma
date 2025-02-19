@@ -8,32 +8,32 @@ datasource db {
 }
 
 model Product {
-  id          String      @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   description String
   price       Float
   salePrice   Float?
-  isOnSale    Boolean     @default(false)
+  isOnSale    Boolean        @default(false)
   images      String[]
   category    String
   subcategory String?
   condition   String
   tags        String[]
-  rating      Float       @default(0)
-  reviewCount Int         @default(0)
-  inventory   Int         @default(0)
-  freeShipping Boolean    @default(false)
+  rating      Float          @default(0)
+  reviewCount Int            @default(0)
+  inventory   Int
+  freeShipping Boolean       @default(false)
   sellerId    String
-  status      String      @default("ACTIVE")
-  salesCount  Int         @default(0)
-  isVisible   Boolean     @default(true)
-  viewCount   Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  seller      User        @relation("SellerProducts", fields: [sellerId], references: [id])
+  status      String         @default("ACTIVE")
+  salesCount  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  seller      User           @relation("SellerProducts", fields: [sellerId], references: [id])
   reviews     Review[]
-  searchLogs  SearchLog[] @relation("ProductSearches")
+  searchLogs  SearchLog[]    @relation("ProductSearches")
   orderItems  OrderItem[]
+  registryItems RegistryItem[]
+  wishlistItems WishlistItem[]
 
   @@index([category])
   @@index([subcategory])
@@ -46,6 +46,96 @@ model Product {
   @@index([salesCount])
   @@index([title])
   @@index([description])
+}
+
+model Registry {
+  id              String        @id @default(cuid())
+  userId          String
+  title           String
+  eventDate       DateTime
+  eventType       String
+  description     String?
+  privacyStatus   String        @default("PUBLIC")
+  status          String        @default("ACTIVE")
+  coupleName1     String
+  coupleName2     String?
+  eventLocation   String
+  coverImage      String?
+  uniqueUrl       String        @unique
+  thankyouMessage String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           RegistryItem[]
+
+  @@index([userId])
+  @@index([eventDate])
+  @@index([status])
+}
+
+model RegistryItem {
+  id                String            @id @default(cuid())
+  registryId        String
+  productId         String
+  quantity          Int               @default(1)
+  priority          String            @default("LOW")
+  status            String            @default("AVAILABLE")
+  note              String?
+  customItem        Boolean           @default(false)
+  customItemDetails Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  registry          Registry          @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  product           Product           @relation(fields: [productId], references: [id])
+  contributions     GiftContribution[]
+
+  @@index([registryId])
+  @@index([productId])
+  @@index([status])
+}
+
+model Wishlist {
+  id          String         @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  isPublic    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       WishlistItem[]
+
+  @@index([userId])
+}
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  wishlistId  String
+  productId   String
+  note        String?
+  priority    String   @default("LOW")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  wishlist    Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([wishlistId])
+  @@index([productId])
+}
+
+model GiftContribution {
+  id             String       @id @default(cuid())
+  registryItemId String
+  userId         String
+  amount         Float
+  message        String?
+  anonymous      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  registryItem   RegistryItem @relation(fields: [registryItemId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([registryItemId])
+  @@index([userId])
 }
 
 model Review {
@@ -67,7 +157,7 @@ model Review {
 model SearchHistory {
   id        String   @id @default(cuid())
   userId    String   @unique
-  searches  Json     // Array of recent searches
+  searches  Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
@@ -76,16 +166,16 @@ model SearchHistory {
 }
 
 model SearchLog {
-  id              String   @id @default(cuid())
-  query           String
-  filters         Json?    // Search filters used
-  sorting         String?  // Sort option used
-  results         Int      // Number of results returned
-  clickedId       String?  // ID of product clicked, if any
-  userId          String?  // Optional: user who performed the search
-  createdAt       DateTime @default(now())
-  user            User?    @relation(fields: [userId], references: [id])
-  clickedProduct  Product? @relation("ProductSearches", fields: [clickedId], references: [id])
+  id             String   @id @default(cuid())
+  query          String
+  filters        Json?
+  sorting        String?
+  results        Int
+  clickedId      String?
+  userId         String?
+  createdAt      DateTime @default(now())
+  user           User?    @relation(fields: [userId], references: [id])
+  clickedProduct Product? @relation("ProductSearches", fields: [clickedId], references: [id])
 
   @@index([query])
   @@index([userId])
@@ -94,26 +184,28 @@ model SearchLog {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String        @unique
-  name          String?
-  role          UserRole      @default(USER)
-  products      Product[]     @relation("SellerProducts")
-  reviews       Review[]
-  searchHistory SearchHistory?
-  searchLogs    SearchLog[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String?
+  role             UserRole          @default(USER)
+  products         Product[]         @relation("SellerProducts")
+  reviews          Review[]
+  searchHistory    SearchHistory?
+  searchLogs       SearchLog[]
+  registries       Registry[]
+  wishlists        Wishlist[]
+  contributions    GiftContribution[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   orderId   String
   productId String
   quantity  Int
   price     Float
-  product   Product  @relation(fields: [productId], references: [id])
-  // ... other order item fields
+  product   Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])

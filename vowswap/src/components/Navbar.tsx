@@ -4,13 +4,19 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CartPreview } from "./cart/CartPreview";
 import { usePathname } from "next/navigation";
+import { useRef, useState } from "react";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = session?.user?.role === "admin";
   const isActive = (path: string) => pathname === path;
+
+  useOnClickOutside(dropdownRef, () => setIsOpen(false));
 
   return (
     <nav className="bg-white shadow-sm">
@@ -86,11 +92,19 @@ export default function Navbar() {
             {session?.user ? (
               <div className="flex items-center gap-4">
                 <CartPreview />
-                <div className="relative group">
-                  <button className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600">
+                <div className="relative">
+                  <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                  >
                     {session.user.name || session.user.email}
                   </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
+                  <div
+                    ref={dropdownRef}
+                    className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ${
+                      isOpen ? "block" : "hidden"
+                    }`}
+                  >
                     <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
