@@ -33,16 +33,38 @@ export default function Navbar() {
                 Products
               </Link>
               {session?.user && (
-                <Link
-                  href="/orders"
-                  className={`text-sm font-medium ${
-                    isActive("/orders")
-                      ? "text-blue-600"
-                      : "text-gray-700 hover:text-blue-600"
-                  }`}
-                >
-                  My Orders
-                </Link>
+                <>
+                  <Link
+                    href="/orders"
+                    className={`text-sm font-medium ${
+                      isActive("/orders")
+                        ? "text-blue-600"
+                        : "text-gray-700 hover:text-blue-600"
+                    }`}
+                  >
+                    My Orders
+                  </Link>
+                  <Link
+                    href="/registry"
+                    className={`text-sm font-medium ${
+                      pathname.startsWith("/registry")
+                        ? "text-blue-600"
+                        : "text-gray-700 hover:text-blue-600"
+                    }`}
+                  >
+                    Registry
+                  </Link>
+                  <Link
+                    href="/wishlist"
+                    className={`text-sm font-medium ${
+                      pathname.startsWith("/wishlist")
+                        ? "text-blue-600"
+                        : "text-gray-700 hover:text-blue-600"
+                    }`}
+                  >
+                    Wishlist
+                  </Link>
+                </>
               )}
               {isAdmin && (
                 <Link
@@ -80,6 +102,18 @@ export default function Navbar() {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Orders
+                    </Link>
+                    <Link
+                      href="/registry"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Registry
+                    </Link>
+                    <Link
+                      href="/wishlist"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Wishlist
                     </Link>
                     {isAdmin && (
                       <Link
