@@ -20,6 +20,8 @@ export interface Order {
   updatedAt: Date;
 }
 
+export type UserRole = 'USER' | 'SELLER' | 'ADMIN';
+
 export interface User {
   id: string;
   name: string | null;
@@ -27,6 +29,7 @@ export interface User {
   emailVerified: Date | null;
   hashedPassword: string | null;
   image: string | null;
+  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
   addresses: Address[];

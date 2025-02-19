@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ProductFilters, SortOption } from '@/types/product';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 
 const PAGE_SIZE = 12;
 
@@ -13,6 +16,7 @@ interface SearchParams {
 
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
     const page = parseInt(searchParams.get('page') || '1');
@@ -22,7 +26,7 @@ export async function GET(request: Request) {
     const filters: ProductFilters = filtersParam ? JSON.parse(filtersParam) : {};
 
     // Build the where clause
-    const where = {
+    const where: Prisma.ProductWhereInput = {
       AND: [
         // Status and visibility
         { status: 'ACTIVE' },
@@ -31,8 +35,8 @@ export async function GET(request: Request) {
         // Search query
         query ? {
           OR: [
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
+            { title: { contains: query, mode: 'insensitive' } as Prisma.StringFilter },
+            { description: { contains: query, mode: 'insensitive' } as Prisma.StringFilter },
             { tags: { has: query.toLowerCase() } },
           ],
         } : {},
@@ -117,6 +121,19 @@ export async function GET(request: Request) {
     const totalPages = Math.ceil(total / PAGE_SIZE);
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
+
+    // Log search analytics if there's a query
+    if (query) {
+      await prisma.searchLog.create({
+        data: {
+          query,
+          filters: filtersParam ? (JSON.parse(filtersParam) as Prisma.JsonObject) : Prisma.JsonNull,
+          sorting: sortBy,
+          results: total,
+          userId: session?.user?.id,
+        },
+      });
+    }
 
     return NextResponse.json({
       products,

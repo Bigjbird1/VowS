@@ -97,11 +97,13 @@ model User {
   id            String         @id @default(cuid())
   email         String        @unique
   name          String?
+  role          UserRole      @default(USER)
   products      Product[]     @relation("SellerProducts")
   reviews       Review[]
   searchHistory SearchHistory?
   searchLogs    SearchLog[]
-  // ... other user-related fields
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model OrderItem {
@@ -115,4 +117,10 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+enum UserRole {
+  USER
+  SELLER
+  ADMIN
 }

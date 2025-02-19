@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -14,11 +14,15 @@ export async function GET() {
       where: { userId: session.user.id },
     });
 
-    return NextResponse.json({
-      searches: searchHistory ? (searchHistory.searches as string[]) : [],
-    });
+    if (!searchHistory) {
+      return NextResponse.json({ searches: [] });
+    }
+
+    // Parse the JSON array of searches
+    const searches = searchHistory.searches as string[];
+    return NextResponse.json({ searches });
   } catch (error) {
-    console.error('Get search history error:', error);
+    console.error('Search history error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch search history' },
       { status: 500 }
@@ -26,11 +30,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const { query } = await request.json();
@@ -46,33 +53,31 @@ export async function POST(request: Request) {
       where: { userId: session.user.id },
     });
 
-    if (existingHistory) {
-      // Update existing history
-      const searches = existingHistory.searches as string[];
-      const updatedSearches = [
-        query,
-        ...searches.filter(s => s !== query),
-      ].slice(0, 10); // Keep only last 10 searches
+    let searches = existingHistory
+      ? (existingHistory.searches as string[])
+      : [];
 
-      await prisma.searchHistory.update({
-        where: { userId: session.user.id },
-        data: { searches: updatedSearches },
-      });
+    // Remove the query if it already exists and add it to the beginning
+    searches = [
+      query,
+      ...searches.filter(q => q !== query),
+    ].slice(0, 10); // Keep only last 10 searches
 
-      return NextResponse.json({ searches: updatedSearches });
-    } else {
-      // Create new history
-      const newHistory = await prisma.searchHistory.create({
-        data: {
-          userId: session.user.id,
-          searches: [query],
-        },
-      });
+    // Upsert the search history
+    await prisma.searchHistory.upsert({
+      where: { userId: session.user.id },
+      create: {
+        userId: session.user.id,
+        searches: searches,
+      },
+      update: {
+        searches: searches,
+      },
+    });
 
-      return NextResponse.json({ searches: newHistory.searches });
-    }
+    return NextResponse.json({ searches });
   } catch (error) {
-    console.error('Update search history error:', error);
+    console.error('Search history error:', error);
     return NextResponse.json(
       { error: 'Failed to update search history' },
       { status: 500 }
@@ -84,7 +89,10 @@ export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     await prisma.searchHistory.update({
@@ -92,9 +100,9 @@ export async function DELETE() {
       data: { searches: [] },
     });
 
-    return NextResponse.json({ message: 'Search history cleared' });
+    return NextResponse.json({ searches: [] });
   } catch (error) {
-    console.error('Clear search history error:', error);
+    console.error('Search history error:', error);
     return NextResponse.json(
       { error: 'Failed to clear search history' },
       { status: 500 }
