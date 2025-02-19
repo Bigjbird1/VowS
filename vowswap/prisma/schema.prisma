@@ -44,6 +44,7 @@ model User {
   emailVerified   DateTime?
   hashedPassword  String?
   image           String?
+  role            String    @default("customer")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
@@ -52,6 +53,7 @@ model User {
   addresses       Address[]
   orders          Order[]
   cartItems       CartItem[]
+  adminActions    AdminAction[]
 }
 
 model VerificationToken {
@@ -85,6 +87,7 @@ model Product {
   images      String[]
   category    String
   condition   String
+  inventory   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -105,18 +108,22 @@ model CartItem {
 }
 
 model Order {
-  id              String   @id @default(cuid())
+  id              String      @id @default(cuid())
   userId          String
   total           Float
-  status          String
+  status          OrderStatus @default(PENDING)
   shippingAddress String
   paymentIntent   String?
   paymentStatus   String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  trackingNumber  String?
+  notes           String?
+  emailsSent      String[]    @default([])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
 }
 
 model OrderItem {
@@ -130,4 +137,33 @@ model OrderItem {
 
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+  updatedBy String
+
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model AdminAction {
+  id          String    @id @default(cuid())
+  userId      String
+  action      String
+  details     String
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }

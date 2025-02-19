@@ -1,12 +1,16 @@
 import { NextAuthOptions } from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { compare } from "bcrypt";
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.AUTH_SECRET,
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+  },
+  pages: {
+    signIn: "/auth/signin",
   },
   providers: [
     CredentialsProvider({
@@ -17,55 +21,64 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email,
           },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            hashedPassword: true,
+            role: true,
+          },
         });
 
         if (!user || !user.hashedPassword) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
+        const isValid = await compare(credentials.password, user.hashedPassword);
 
         if (!isValid) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
         };
       },
     }),
   ],
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        return {
-          ...token,
-          id: user.id,
-        };
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
+    async session({ token, session }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.role = token.role as string;
       }
       return session;
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
   },
 };
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role?: string;
+  }
+}

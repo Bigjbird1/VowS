@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import CustomerOrderDetails from "@/components/orders/CustomerOrderDetails";
+import OrderDetails from "@/components/admin/OrderDetails";
 
 interface OrderPageProps {
   params: {
@@ -17,9 +17,25 @@ export default async function OrderPage({ params }: OrderPageProps) {
     redirect("/auth/signin");
   }
 
+  // Check if user is admin
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
+  if (user?.role !== "admin") {
+    redirect("/");
+  }
+
   const order = await prisma.order.findUnique({
     where: { id: params.id },
     include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
       items: {
         include: {
           product: {
@@ -32,6 +48,14 @@ export default async function OrderPage({ params }: OrderPageProps) {
         },
       },
       statusHistory: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -40,17 +64,12 @@ export default async function OrderPage({ params }: OrderPageProps) {
   });
 
   if (!order) {
-    redirect("/orders");
-  }
-
-  // Only allow order owner to view the order
-  if (order.userId !== session.user.id) {
-    redirect("/orders");
+    redirect("/admin/orders");
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <CustomerOrderDetails order={order} />
+      <OrderDetails order={order} />
     </div>
   );
 }

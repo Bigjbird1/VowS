@@ -18,6 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="color-scheme" content="light" />
+      </head>
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen flex flex-col">
