@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useSearch } from '@/contexts/search';
 import { SortOption } from '@/types/product';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useRef } from 'react';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
-interface SortDropdownProps {
-  value: SortOption | undefined;
-  onChange: (option: SortOption) => void;
-}
-
-const sortOptions: Array<{ value: SortOption; label: string }> = [
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: 'Most Relevant' },
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
@@ -19,59 +16,63 @@ const sortOptions: Array<{ value: SortOption; label: string }> = [
   { value: 'recently_added', label: 'Recently Added' },
 ];
 
-export default function SortDropdown({ value, onChange }: SortDropdownProps) {
+export default function SortDropdown() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { filters, setFilters } = useSearch();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(dropdownRef, () => setIsOpen(false));
 
-  const currentOption = sortOptions.find(option => option.value === value) || sortOptions[0];
+  const currentSort = filters.sortBy || 'relevance';
+  const currentLabel = SORT_OPTIONS.find(option => option.value === currentSort)?.label || 'Sort By';
+
+  const handleSort = (sortOption: SortOption) => {
+    const updatedFilters = { ...filters, sortBy: sortOption };
+    setFilters(updatedFilters);
+
+    // Update URL
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set('filters', JSON.stringify(updatedFilters));
+    router.push(`?${params.toString()}`);
+
+    setIsOpen(false);
+  };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
-        type="button"
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        <span>Sort by: {currentOption.label}</span>
+        <span>{currentLabel}</span>
         <svg
-          className={`w-5 h-5 transition-transform duration-200 ${
-            isOpen ? 'transform rotate-180' : ''
-          }`}
+          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
-          stroke="currentColor"
           viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
-          <div className="py-1">
-            {sortOptions.map(option => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-2 text-sm text-left ${
-                  option.value === value
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {option.label}
-              </button>
+        <div className="absolute right-0 z-10 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+          <ul className="py-1">
+            {SORT_OPTIONS.map(({ value, label }) => (
+              <li key={value}>
+                <button
+                  onClick={() => handleSort(value)}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                    currentSort === value ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
     </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '@/types/product';
@@ -10,7 +12,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
-      href={`/products?id=${product.id}`}
+      href={`/products/${product.id}`}
       className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white hover:shadow-lg transition-shadow duration-200"
     >
       {/* Product Image */}
@@ -22,19 +24,25 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="object-cover group-hover:scale-105 transition-transform duration-200"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {product.isOnSale && (
-          <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-md text-xs font-medium">
-            Sale
-          </div>
-        )}
-        {product.freeShipping && (
-          <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-medium">
-            Free Shipping
-          </div>
-        )}
+        
+        {/* Badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-2">
+          {product.isOnSale && (
+            <span className="px-2 py-1 text-xs font-semibold text-white bg-red-600 rounded-md">
+              Sale
+            </span>
+          )}
+          {product.freeShipping && (
+            <span className="px-2 py-1 text-xs font-semibold text-white bg-green-600 rounded-md">
+              Free Shipping
+            </span>
+          )}
+        </div>
+
+        {/* Out of Stock Overlay */}
         {product.inventory === 0 && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-medium px-4 py-2 bg-black bg-opacity-75 rounded-md">
+            <span className="px-4 py-2 text-sm font-medium text-white bg-black bg-opacity-75 rounded-md">
               Out of Stock
             </span>
           </div>
@@ -43,17 +51,18 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+        {/* Title */}
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
           {product.title}
         </h3>
 
         {/* Category */}
-        <p className="mt-1 text-sm text-gray-500 line-clamp-1">
+        <p className="text-xs text-gray-500 mb-2">
           {product.subcategory ? `${product.category} > ${product.subcategory}` : product.category}
         </p>
 
         {/* Price */}
-        <div className="mt-2 flex items-center">
+        <div className="flex items-center mb-2">
           {product.isOnSale && product.salePrice ? (
             <>
               <span className="text-lg font-bold text-red-600">
@@ -71,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Rating */}
-        <div className="mt-2 flex items-center">
+        <div className="flex items-center mb-2">
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
               <svg
@@ -98,7 +107,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Tags */}
         {product.tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 mt-auto pt-2">
             {product.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}

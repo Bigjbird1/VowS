@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ProductFilters, SortOption } from '@/types/product';
-import { Prisma } from '@prisma/client';
 
 const PAGE_SIZE = 12;
 
@@ -23,7 +22,7 @@ export async function GET(request: Request) {
     const filters: ProductFilters = filtersParam ? JSON.parse(filtersParam) : {};
 
     // Build the where clause
-    const where: Prisma.ProductWhereInput = {
+    const where = {
       AND: [
         // Status and visibility
         { status: 'ACTIVE' },
@@ -76,23 +75,23 @@ export async function GET(request: Request) {
     };
 
     // Build the orderBy clause
-    const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+    const orderBy = (() => {
       switch (sortBy) {
         case 'price_asc':
-          return { price: 'asc' };
+          return { price: 'asc' as const };
         case 'price_desc':
-          return { price: 'desc' };
+          return { price: 'desc' as const };
         case 'newest':
-          return { createdAt: 'desc' };
+          return { createdAt: 'desc' as const };
         case 'best_selling':
-          return { salesCount: 'desc' };
+          return { salesCount: 'desc' as const };
         case 'rating':
-          return { rating: 'desc' };
+          return { rating: 'desc' as const };
         case 'recently_added':
-          return { createdAt: 'desc' };
+          return { createdAt: 'desc' as const };
         default:
           // Default sorting by relevance (if there's a search query) or newest
-          return query ? { rating: 'desc' } : { createdAt: 'desc' };
+          return query ? { rating: 'desc' as const } : { createdAt: 'desc' as const };
       }
     })();
 
