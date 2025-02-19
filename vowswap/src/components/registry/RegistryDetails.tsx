@@ -1,3 +1,5 @@
+"use client"
+
 import { Registry, RegistryItemWithProduct } from "@/types/registry"
 import Image from "next/image"
 import Link from "next/link"

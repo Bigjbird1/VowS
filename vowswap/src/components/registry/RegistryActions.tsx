@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { RegistryItemWithProduct } from "@/types/registry"
 import { useRouter } from "next/navigation"
