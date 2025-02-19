@@ -1,69 +1,105 @@
-export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+export type SortOption =
+  | 'relevance'
+  | 'price_asc'
+  | 'price_desc'
+  | 'newest'
+  | 'best_selling'
+  | 'rating'
+  | 'recently_added';
 
-export interface Product {
-  id: string;
-  sellerId: string;
-  title: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  condition: string;
-  inventory: number;
-  status: ProductStatus;
-  isVisible: boolean;
-  viewCount: number;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
+export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED' | 'DRAFT' | 'ARCHIVED';
 
 export interface ProductFilters {
   category?: string;
+  subcategory?: string;
   condition?: string;
   minPrice?: number;
   maxPrice?: number;
-  search?: string;
+  tags?: string[];
+  freeShippingOnly?: boolean;
+  onSaleOnly?: boolean;
+  minRating?: number;
+  availability?: 'in_stock' | 'out_of_stock' | 'all';
+  sortBy?: SortOption;
+}
+
+export interface SearchSuggestion {
+  type: 'product' | 'category' | 'tag';
+  text: string;
+  count: number;
+}
+
+export interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  salePrice?: number;
+  isOnSale: boolean;
+  images: string[];
+  category: string;
+  subcategory: string | null;
+  condition: string;
+  tags: string[];
+  rating: number;
+  reviewCount: number;
+  inventory: number;
+  freeShipping: boolean;
+  sellerId: string;
+  status: ProductStatus;
+  salesCount: number;
+  createdAt: string;
+  updatedAt: string;
+  isVisible?: boolean;
+  viewCount?: number;
 }
 
 export interface ProductFormData {
   title: string;
   description: string;
   price: number;
+  salePrice?: number;
+  isOnSale?: boolean;
   images: string[];
   category: string;
+  subcategory?: string;  // Changed from string | null to just string
   condition: string;
+  tags?: string[];
   inventory: number;
+  freeShipping?: boolean;
   status: ProductStatus;
+  isVisible?: boolean;
 }
 
 export interface ProductUpdateInput {
+  id: string;
   title?: string;
   description?: string;
   price?: number;
+  salePrice?: number;
+  isOnSale?: boolean;
   images?: string[];
   category?: string;
+  subcategory?: string;  // Changed from string | null to just string
   condition?: string;
+  tags?: string[];
   inventory?: number;
+  freeShipping?: boolean;
   status?: ProductStatus;
   isVisible?: boolean;
 }
 
-export interface ProductListResponse {
-  products: Product[];
-  pagination: {
-    total: number;
-    pages: number;
-    current: number;
-  };
+export interface SearchAnalytics {
+  query: string;
+  filters?: ProductFilters;
+  sorting?: SortOption;
+  resultCount: number;
+  clickedProductId?: string;
 }
 
-export interface ProductFilterParams {
-  category?: string;
-  condition?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  status?: ProductStatus;
-  page?: number;
-  limit?: number;
-  search?: string;
+export interface ProductStats {
+  viewCount: number;
+  salesCount: number;
+  rating: number;
+  reviewCount: number;
 }

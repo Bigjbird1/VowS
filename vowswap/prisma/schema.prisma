@@ -7,252 +7,112 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model User {
-  id                    String                 @id @default(cuid())
-  name                  String?
-  email                 String?                @unique
-  emailVerified        DateTime?
-  image                 String?
-  accounts              Account[]
-  sessions              Session[]
-  seller                Seller?
-  orders                Order[]
-  registries            Registry[]
-  wishlists             Wishlist[]
-  contributions         GiftContribution[]
-  notificationPreferences NotificationPreference?
-  emailLogs            EmailLog[]
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 model Product {
-  id          String         @id @default(cuid())
-  sellerId    String
+  id          String      @id @default(cuid())
   title       String
   description String
   price       Float
+  salePrice   Float?
+  isOnSale    Boolean     @default(false)
   images      String[]
   category    String
+  subcategory String?
   condition   String
-  inventory   Int
-  status      String        @default("ACTIVE")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  seller      Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  tags        String[]
+  rating      Float       @default(0)
+  reviewCount Int         @default(0)
+  inventory   Int         @default(0)
+  freeShipping Boolean    @default(false)
+  sellerId    String
+  status      String      @default("ACTIVE")
+  salesCount  Int         @default(0)
+  isVisible   Boolean     @default(true)
+  viewCount   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  seller      User        @relation("SellerProducts", fields: [sellerId], references: [id])
+  reviews     Review[]
+  searchLogs  SearchLog[] @relation("ProductSearches")
   orderItems  OrderItem[]
-  registryItems RegistryItem[]
-  wishlistItems WishlistItem[]
+
+  @@index([category])
+  @@index([subcategory])
+  @@index([tags])
+  @@index([status])
+  @@index([sellerId])
+  @@index([createdAt])
+  @@index([price])
+  @@index([rating])
+  @@index([salesCount])
+  @@index([title])
+  @@index([description])
 }
 
-model Seller {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  businessName    String
-  description     String?
-  contactEmail    String
-  contactPhone    String?
-  address         String?
-  status          String    @default("PENDING")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products        Product[]
-  orders          Order[]
+model Review {
+  id        String   @id @default(cuid())
+  rating    Float
+  comment   String?
+  productId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
 }
 
-model Order {
-  id              String      @id @default(cuid())
-  userId          String
-  sellerId        String
-  status          String
-  total           Float
-  shippingAddress Json
-  paymentDetails  Json?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  user            User        @relation(fields: [userId], references: [id])
-  seller          Seller      @relation(fields: [sellerId], references: [id])
-  items           OrderItem[]
-  emailLogs       EmailLog[]
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  searches  Json     // Array of recent searches
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model SearchLog {
+  id              String   @id @default(cuid())
+  query           String
+  filters         Json?    // Search filters used
+  sorting         String?  // Sort option used
+  results         Int      // Number of results returned
+  clickedId       String?  // ID of product clicked, if any
+  userId          String?  // Optional: user who performed the search
+  createdAt       DateTime @default(now())
+  user            User?    @relation(fields: [userId], references: [id])
+  clickedProduct  Product? @relation("ProductSearches", fields: [clickedId], references: [id])
+
+  @@index([query])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([clickedId])
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String        @unique
+  name          String?
+  products      Product[]     @relation("SellerProducts")
+  reviews       Review[]
+  searchHistory SearchHistory?
+  searchLogs    SearchLog[]
+  // ... other user-related fields
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   orderId   String
   productId String
   quantity  Int
   price     Float
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
-}
+  product   Product  @relation(fields: [productId], references: [id])
+  // ... other order item fields
 
-model Registry {
-  id              String         @id @default(cuid())
-  userId          String
-  title           String
-  eventDate       DateTime
-  eventType       String
-  description     String?
-  privacyStatus   String         @default("PUBLIC")
-  status          String         @default("ACTIVE")
-  coupleName1     String
-  coupleName2     String?
-  eventLocation   String
-  coverImage      String?
-  thankyouMessage String?
-  uniqueUrl       String         @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items           RegistryItem[]
-  emailLogs       EmailLog[]
-}
-
-model RegistryItem {
-  id                String             @id @default(cuid())
-  registryId        String
-  productId         String
-  quantity          Int                @default(1)
-  priority          String             @default("LOW")
-  status            String             @default("AVAILABLE")
-  note              String?
-  customItem        Boolean            @default(false)
-  customItemDetails Json?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  registry          Registry           @relation(fields: [registryId], references: [id], onDelete: Cascade)
-  product           Product            @relation(fields: [productId], references: [id])
-  contributions     GiftContribution[]
-}
-
-model GiftContribution {
-  id              String       @id @default(cuid())
-  registryItemId  String
-  userId          String
-  amount          Float
-  message         String?
-  anonymous       Boolean      @default(false)
-  createdAt       DateTime     @default(now())
-  registryItem    RegistryItem @relation(fields: [registryItemId], references: [id], onDelete: Cascade)
-  user            User         @relation(fields: [userId], references: [id])
-}
-
-model Wishlist {
-  id          String         @id @default(cuid())
-  userId      String
-  title       String
-  description String?
-  isPublic    Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       WishlistItem[]
-}
-
-model WishlistItem {
-  id         String   @id @default(cuid())
-  wishlistId String
-  productId  String
-  priority   String   @default("LOW")
-  note       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id])
-}
-
-// Email related models
-model EmailTemplate {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  subject     String
-  htmlContent String   @db.Text
-  textContent String   @db.Text
-  variables   String[] // Array of variable names used in template
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  emailLogs   EmailLog[]
-}
-
-model EmailLog {
-  id              String        @id @default(cuid())
-  templateId      String
-  userId          String?
-  orderId         String?
-  registryId      String?
-  recipient       String
-  subject         String
-  content         String        @db.Text
-  status          String        // SENT, FAILED, QUEUED
-  error           String?       @db.Text
-  metadata        Json?
-  sentAt          DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  template        EmailTemplate @relation(fields: [templateId], references: [id])
-  user            User?         @relation(fields: [userId], references: [id])
-  order           Order?        @relation(fields: [orderId], references: [id])
-  registry        Registry?     @relation(fields: [registryId], references: [id])
-  queuedEmail     EmailQueue?
-}
-
-model EmailQueue {
-  id            String    @id @default(cuid())
-  emailLogId    String    @unique
-  attempts      Int       @default(0)
-  maxAttempts   Int       @default(3)
-  nextAttempt   DateTime?
-  lastError     String?   @db.Text
-  status        String    // PENDING, PROCESSING, COMPLETED, FAILED
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  emailLog      EmailLog  @relation(fields: [emailLogId], references: [id], onDelete: Cascade)
-}
-
-model NotificationPreference {
-  id                      String   @id @default(cuid())
-  userId                  String   @unique
-  orderUpdates           Boolean  @default(true)
-  shippingUpdates        Boolean  @default(true)
-  registryUpdates        Boolean  @default(true)
-  giftContributions      Boolean  @default(true)
-  marketingEmails        Boolean  @default(false)
-  securityAlerts         Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([orderId])
+  @@index([productId])
 }

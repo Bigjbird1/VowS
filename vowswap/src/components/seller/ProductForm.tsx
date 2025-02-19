@@ -16,6 +16,8 @@ export default function ProductForm({ initialData, sellerId, mode }: ProductForm
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(initialData?.images || []);
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [isOnSale, setIsOnSale] = useState(initialData?.isOnSale || false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,11 +30,23 @@ export default function ProductForm({ initialData, sellerId, mode }: ProductForm
       description: formData.get("description") as string,
       price: parseFloat(formData.get("price") as string),
       category: formData.get("category") as string,
+      subcategory: formData.get("subcategory") as string,
       condition: formData.get("condition") as string,
       inventory: parseInt(formData.get("inventory") as string),
       status: formData.get("status") as ProductStatus,
       images,
+      tags,
+      freeShipping: formData.get("freeShipping") === "true",
+      isOnSale,
+      salePrice: isOnSale ? parseFloat(formData.get("salePrice") as string) : undefined,
     };
+
+    // Validate sale price
+    if (isOnSale && (!data.salePrice || data.salePrice >= data.price)) {
+      setError("Sale price must be lower than regular price");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const url = mode === "create" 
@@ -72,6 +86,39 @@ export default function ProductForm({ initialData, sellerId, mode }: ProductForm
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const input = e.currentTarget;
+      const value = input.value.trim();
+      if (value && !tags.includes(value)) {
+        setTags(prev => [...prev, value]);
+        input.value = '';
+      }
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(prev => prev.filter(tag => tag !== tagToRemove));
+  };
+
+  const getSubcategories = (category: string) => {
+    switch (category) {
+      case "Dresses":
+        return ["Wedding Dresses", "Bridesmaid Dresses", "Reception Dresses", "Other Dresses"];
+      case "Accessories":
+        return ["Veils", "Hair Accessories", "Belts", "Other Accessories"];
+      case "Shoes":
+        return ["Bridal Shoes", "Bridesmaid Shoes", "Evening Shoes", "Other Shoes"];
+      case "Jewelry":
+        return ["Bridal Sets", "Necklaces", "Earrings", "Bracelets", "Other Jewelry"];
+      case "Decorations":
+        return ["Centerpieces", "Flowers", "Lighting", "Signs", "Other Decorations"];
+      default:
+        return [];
+    }
   };
 
   return (
@@ -172,6 +219,25 @@ export default function ProductForm({ initialData, sellerId, mode }: ProductForm
           </div>
 
           <div>
+            <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700">
+              Subcategory
+            </label>
+            <select
+              name="subcategory"
+              id="subcategory"
+              defaultValue={initialData?.subcategory}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Select a subcategory</option>
+              {getSubcategories(initialData?.category || '').map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
             <label htmlFor="condition" className="block text-sm font-medium text-gray-700">
               Condition
             </label>
@@ -189,23 +255,106 @@ export default function ProductForm({ initialData, sellerId, mode }: ProductForm
               <option value="Fair">Fair</option>
             </select>
           </div>
+
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+              Status
+            </label>
+            <select
+              name="status"
+              id="status"
+              required
+              defaultValue={initialData?.status || "DRAFT"}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="ACTIVE">Active</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+          </div>
         </div>
 
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            name="status"
-            id="status"
-            required
-            defaultValue={initialData?.status || "DRAFT"}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="ACTIVE">Active</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
+          <label className="block text-sm font-medium text-gray-700">Tags</label>
+          <div className="mt-2">
+            <input
+              type="text"
+              placeholder="Type a tag and press Enter or comma"
+              onKeyDown={handleTagInput}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          {tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {tags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="ml-1 inline-flex items-center p-0.5 text-blue-400 hover:text-blue-600"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="freeShipping"
+              id="freeShipping"
+              value="true"
+              defaultChecked={initialData?.freeShipping}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="freeShipping" className="ml-2 block text-sm text-gray-700">
+              Offer free shipping
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isOnSale"
+              checked={isOnSale}
+              onChange={(e) => setIsOnSale(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isOnSale" className="ml-2 block text-sm text-gray-700">
+              Put item on sale
+            </label>
+          </div>
+
+          {isOnSale && (
+            <div>
+              <label htmlFor="salePrice" className="block text-sm font-medium text-gray-700">
+                Sale Price
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">$</span>
+                </div>
+                <input
+                  type="number"
+                  name="salePrice"
+                  id="salePrice"
+                  required
+                  min="0"
+                  step="0.01"
+                  defaultValue={initialData?.salePrice}
+                  className="pl-7 mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div>

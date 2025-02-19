@@ -10,30 +10,41 @@ type OrderConfirmationProps = React.ComponentProps<typeof OrderConfirmation>;
 type WelcomeProps = React.ComponentProps<typeof Welcome>;
 type RegistryContributionProps = React.ComponentProps<typeof RegistryContribution>;
 
+// Template name literals
+const TEMPLATE_NAMES = {
+  ORDER_CONFIRMATION: "order_confirmation",
+  WELCOME_EMAIL: "welcome_email",
+  REGISTRY_CONTRIBUTION: "registry_contribution",
+} as const;
+
+type TemplateName = typeof TEMPLATE_NAMES[keyof typeof TEMPLATE_NAMES];
+
 // Template configuration type
 type TemplateConfig = {
   OrderConfirmation: {
-    name: "order_confirmation";
+    name: typeof TEMPLATE_NAMES.ORDER_CONFIRMATION;
     subject: string;
     component: typeof OrderConfirmation;
     sampleData: OrderConfirmationProps;
     variables: string[];
   };
   Welcome: {
-    name: "welcome_email";
+    name: typeof TEMPLATE_NAMES.WELCOME_EMAIL;
     subject: string;
     component: typeof Welcome;
     sampleData: WelcomeProps;
     variables: string[];
   };
   RegistryContribution: {
-    name: "registry_contribution";
+    name: typeof TEMPLATE_NAMES.REGISTRY_CONTRIBUTION;
     subject: string;
     component: typeof RegistryContribution;
     sampleData: RegistryContributionProps;
     variables: string[];
   };
 };
+
+type TemplateType = TemplateConfig[keyof TemplateConfig];
 
 // Sample data for rendering templates
 const sampleData = {
@@ -76,7 +87,7 @@ const sampleData = {
 
 const templates: TemplateConfig = {
   OrderConfirmation: {
-    name: "order_confirmation",
+    name: TEMPLATE_NAMES.ORDER_CONFIRMATION,
     subject: "Your VowSwap Order Confirmation - Order #{{orderNumber}}",
     component: OrderConfirmation,
     sampleData: sampleData.orderConfirmation,
@@ -88,7 +99,7 @@ const templates: TemplateConfig = {
     ]
   },
   Welcome: {
-    name: "welcome_email",
+    name: TEMPLATE_NAMES.WELCOME_EMAIL,
     subject: "Welcome to VowSwap! Let's get started",
     component: Welcome,
     sampleData: sampleData.welcome,
@@ -99,7 +110,7 @@ const templates: TemplateConfig = {
     ]
   },
   RegistryContribution: {
-    name: "registry_contribution",
+    name: TEMPLATE_NAMES.REGISTRY_CONTRIBUTION,
     subject: "{{isOwner ? 'New contribution to your registry!' : 'Thank you for your registry contribution'}}",
     component: RegistryContribution,
     sampleData: sampleData.registryContribution,
@@ -117,17 +128,40 @@ const templates: TemplateConfig = {
   }
 };
 
+function isTemplateName(name: string): name is TemplateName {
+  return Object.values(TEMPLATE_NAMES).includes(name as TemplateName);
+}
+
+function isTemplateType(value: any): value is TemplateType {
+  return (
+    value &&
+    typeof value === 'object' &&
+    'name' in value &&
+    'subject' in value &&
+    'component' in value &&
+    'sampleData' in value &&
+    'variables' in value &&
+    isTemplateName(value.name) &&
+    typeof value.subject === 'string' &&
+    Array.isArray(value.variables)
+  );
+}
+
 async function renderTemplate<K extends keyof TemplateConfig>(
   template: TemplateConfig[K]
 ): Promise<{ html: string; text: string }> {
+  if (!isTemplateName(template.name)) {
+    throw new Error(`Invalid template name: ${template.name}`);
+  }
+
   // Create a type-safe element based on the template type
   const element = (() => {
     switch (template.name) {
-      case "order_confirmation":
+      case TEMPLATE_NAMES.ORDER_CONFIRMATION:
         return React.createElement(OrderConfirmation, template.sampleData);
-      case "welcome_email":
+      case TEMPLATE_NAMES.WELCOME_EMAIL:
         return React.createElement(Welcome, template.sampleData);
-      case "registry_contribution":
+      case TEMPLATE_NAMES.REGISTRY_CONTRIBUTION:
         return React.createElement(RegistryContribution, template.sampleData);
       default:
         throw new Error(`Unknown template: ${template.name}`);
@@ -144,7 +178,9 @@ async function renderTemplate<K extends keyof TemplateConfig>(
 export async function generateAndSaveTemplates() {
   console.log('Generating email templates...');
 
-  for (const [componentName, template] of Object.entries(templates)) {
+  const templateEntries = (Object.entries(templates) as Array<[keyof TemplateConfig, TemplateType]>);
+  
+  for (const [componentName, template] of templateEntries) {
     console.log(`Processing template: ${template.name}`);
 
     try {
@@ -186,8 +222,13 @@ export async function generateAndSaveTemplates() {
 export function validateTemplateVariables(
   templateName: string,
   variables: Record<string, any>
-) {
-  const template = Object.values(templates).find(t => t.name === templateName);
+): boolean {
+  if (!isTemplateName(templateName)) {
+    throw new Error(`Invalid template name: ${templateName}`);
+  }
+
+  const template = Object.values(templates).find(t => isTemplateType(t) && t.name === templateName);
+
   if (!template) {
     throw new Error(`Template '${templateName}' not found`);
   }
