@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { CartPreview } from "@/components/cart/CartPreview";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -29,7 +30,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+            <CartPreview />
             {status === "loading" ? (
               <div className="h-8 w-8 animate-pulse bg-gray-200 rounded-full"></div>
             ) : session ? (
@@ -129,10 +131,13 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
+          {/* Mobile menu */}
+          {isMenuOpen && (
+            <div className="sm:hidden">
+              <div className="pt-2 pb-3 space-y-1">
+                <div className="pl-3 pr-4 py-2 border-l-4 border-transparent">
+                  <CartPreview />
+                </div>
             <Link
               href="/products"
               className="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300"
