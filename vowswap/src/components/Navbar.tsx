@@ -92,40 +92,43 @@ export default function Navbar() {
             {session?.user ? (
               <div className="flex items-center gap-4">
                 <CartPreview />
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 focus:outline-none"
                   >
                     {session.user.name || session.user.email}
                   </button>
                   <div
-                    ref={dropdownRef}
-                    className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ${
-                      isOpen ? "block" : "hidden"
+                    className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 transition-opacity duration-150 ${
+                      isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                     }`}
                   >
                     <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsOpen(false)}
                     >
                       Profile
                     </Link>
                     <Link
                       href="/orders"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsOpen(false)}
                     >
                       Orders
                     </Link>
                     <Link
                       href="/registry"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsOpen(false)}
                     >
                       Registry
                     </Link>
                     <Link
                       href="/wishlist"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsOpen(false)}
                     >
                       Wishlist
                     </Link>
@@ -133,6 +136,7 @@ export default function Navbar() {
                       <Link
                         href="/admin"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsOpen(false)}
                       >
                         Admin Dashboard
                       </Link>
@@ -140,6 +144,7 @@ export default function Navbar() {
                     <Link
                       href="/auth/signout"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsOpen(false)}
                     >
                       Sign Out
                     </Link>
