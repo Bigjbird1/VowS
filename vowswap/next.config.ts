@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  distDir: '.next',
   images: {
     domains: ['placeholder.jpg'], // Add your image domains here
     minimumCacheTTL: 60,
@@ -19,8 +20,9 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb'
     },
-    serverComponentsExternalPackages: ['@prisma/client'],
+    serverComponentsExternalPackages: ['@prisma/client']
   },
+  output: 'standalone',
   headers: async () => [
     {
       source: '/:path*',
