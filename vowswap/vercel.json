@@ -7,12 +7,14 @@
   "regions": ["iad1"],
   "env": {
     "NEXTAUTH_URL": "https://vowswap.vercel.app",
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "CRON_SECRET": "@cron_secret"
   },
   "build": {
     "env": {
       "NEXTAUTH_URL": "https://vowswap.vercel.app",
-      "NODE_ENV": "production"
+      "NODE_ENV": "production",
+      "CRON_SECRET": "@cron_secret"
     }
   },
   "headers": [
@@ -44,11 +46,11 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/cleanup-expired-sessions",
+      "path": "/api/cron/cleanup-expired-sessions/route",
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/cron/database-backup",
+      "path": "/api/cron/database-backup/route",
       "schedule": "0 4 * * *"
     }
   ]

@@ -58,9 +58,10 @@ const nextConfig: NextConfig = {
   ],
   async redirects() {
     return [
+      // Redirect /admin to the main admin page
       {
-        source: '/admin',
-        destination: '/admin/dashboard',
+        source: '/admin/dashboard',
+        destination: '/admin',
         permanent: true
       }
     ];

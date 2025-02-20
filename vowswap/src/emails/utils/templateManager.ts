@@ -62,7 +62,7 @@ const sampleData = {
     items: [
       {
         name: "Crystal Wine Glasses",
-        quantity: 2,
+       . quantity: 2,
         price: 149.99
       }
     ]
