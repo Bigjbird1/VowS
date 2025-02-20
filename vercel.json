@@ -1,0 +1,14 @@
+{
+  "projectSettings": {
+    "framework": "nextjs",
+    "buildCommand": "cd vowswap && npm run build",
+    "outputDirectory": "vowswap/.next",
+    "devCommand": "cd vowswap && npm run dev",
+    "installCommand": "cd vowswap && npm install"
+  },
+  "env": {
+    "NEXTAUTH_URL": "https://vowswap.vercel.app",
+    "NODE_ENV": "production",
+    "CRON_SECRET": "@cron_secret"
+  }
+}

@@ -1,22 +1,5 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
   "regions": ["iad1"],
-  "env": {
-    "NEXTAUTH_URL": "https://vowswap.vercel.app",
-    "NODE_ENV": "production",
-    "CRON_SECRET": "@cron_secret"
-  },
-  "build": {
-    "env": {
-      "NEXTAUTH_URL": "https://vowswap.vercel.app",
-      "NODE_ENV": "production",
-      "CRON_SECRET": "@cron_secret"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
