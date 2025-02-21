@@ -7,7 +7,7 @@
   "env": {
     "NEXTAUTH_URL": "https://vowswap.vercel.app",
     "NODE_ENV": "production",
-    "CRON_SECRET": "@cron_secret"
+    "CRON_SECRET": "04cb037170153f8c30bf9ed8023dcabf2942d80511eef1838149c7224de625be"
   },
   "regions": ["iad1"],
   "headers": [
