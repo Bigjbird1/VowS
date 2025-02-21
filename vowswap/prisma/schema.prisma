@@ -24,11 +24,11 @@ model Product {
   inventory   Int
   freeShipping Boolean       @default(false)
   sellerId    String
-  status      String         @default("ACTIVE")
+  status      ProductStatus  @default(ACTIVE)
   salesCount  Int            @default(0)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
-  seller      User           @relation("SellerProducts", fields: [sellerId], references: [id])
+  seller      Seller         @relation("SellerProducts", fields: [sellerId], references: [id])
   reviews     Review[]
   searchLogs  SearchLog[]    @relation("ProductSearches")
   orderItems  OrderItem[]
@@ -49,22 +49,54 @@ model Product {
 }
 
 model Order {
-  id              String      @id @default(cuid())
+  id              String             @id @default(cuid())
   userId          String
   total           Float
-  status          String
-  shippingAddress Json
+  status          OrderStatus
+  shippingAddress String
   paymentDetails  Json?
+  paymentStatus   String
+  paymentIntent   String?
+  trackingNumber  String?
+  notes           String?
+  emailsSent      String[]
   sellerId        String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  user            User        @relation(fields: [userId], references: [id])
-  seller          User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id])
+  seller          User               @relation("SellerOrders", fields: [sellerId], references: [id])
   items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
 
   @@index([userId])
   @@index([sellerId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+  updatedBy String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [updatedBy], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model AdminAction {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
   @@index([createdAt])
 }
 
@@ -209,7 +241,6 @@ model User {
   name             String?
   hashedPassword   String?
   role             UserRole          @default(USER)
-  products         Product[]         @relation("SellerProducts")
   orders           Order[]
   sellerOrders     Order[]          @relation("SellerOrders")
   reviews          Review[]
@@ -218,6 +249,9 @@ model User {
   registries       Registry[]
   wishlists        Wishlist[]
   contributions    GiftContribution[]
+  seller           Seller?
+  adminActions     AdminAction[]
+  statusUpdates    OrderStatusHistory[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 }
@@ -239,4 +273,138 @@ enum UserRole {
   USER
   SELLER
   ADMIN
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  htmlContent String   @db.Text
+  textContent String   @db.Text
+  variables   String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailQueue {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  html      String   @db.Text
+  text      String   @db.Text
+  status    String
+  attempts  Int      @default(0)
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Seller {
+  id                  String                 @id @default(cuid())
+  userId              String                 @unique
+  status              SellerVerificationStatus
+  businessName        String
+  businessAddress     Json
+  taxId              String
+  bankInfo           Json
+  payoutSchedule     PayoutSchedule
+  rating             Float                  @default(0)
+  isActive           Boolean                @default(true)
+  storeName          String
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  user               User                   @relation(fields: [userId], references: [id])
+  settings           SellerSettings?
+  analytics          SellerAnalytics[]
+  notifications      SellerNotification[]
+  products           Product[]              @relation("SellerProducts")
+
+  @@index([status])
+  @@index([rating])
+  @@index([isActive])
+}
+
+model SellerSettings {
+  id                String   @id @default(cuid())
+  sellerId         String   @unique
+  notificationPrefs Json
+  autoRestock      Boolean  @default(false)
+  minStockAlert    Int      @default(5)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  seller           Seller   @relation(fields: [sellerId], references: [id])
+}
+
+model SellerAnalytics {
+  id        String   @id @default(cuid())
+  sellerId  String
+  metrics   Json
+  period    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  seller    Seller   @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@index([period])
+}
+
+model SellerNotification {
+  id        String           @id @default(cuid())
+  sellerId  String
+  type      NotificationType
+  message   String
+  read      Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  seller    Seller          @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@index([type])
+  @@index([read])
+}
+
+enum SellerVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayoutSchedule {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum NotificationType {
+  ORDER
+  INVENTORY
+  PAYOUT
+  SYSTEM
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }

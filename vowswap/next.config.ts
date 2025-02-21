@@ -11,17 +11,6 @@ const nextConfig: NextConfig = {
   compress: true,
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
-  optimizeFonts: true,
-  swcMinify: true,
-  experimental: {
-    optimizeCss: {
-      enabled: true
-    },
-    serverActions: {
-      bodySizeLimit: '2mb'
-    },
-    serverComponentsExternalPackages: ['@prisma/client']
-  },
   output: 'standalone',
   headers: async () => [
     {
