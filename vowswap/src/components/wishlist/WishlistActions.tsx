@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ItemPriority } from "@/types/registry"
 
 interface WishlistActionsProps {
   wishlistId: string
@@ -50,14 +49,25 @@ export default function WishlistActions({
   const handleMoveToRegistry = async () => {
     if (!itemId) return
 
+    // Get the user's registry ID
+    const registryResponse = await fetch("/api/registry")
+    if (!registryResponse.ok) {
+      throw new Error("Failed to fetch registry")
+    }
+    const registries = await registryResponse.json()
+    if (!registries.length) {
+      alert("Please create a registry first")
+      return
+    }
+
     try {
-      const response = await fetch(`/api/wishlist/${wishlistId}/items/${itemId}/move-to-registry`, {
+      const response = await fetch(`/api/wishlist/${wishlistId}/items/${itemId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          priority: "MEDIUM" as ItemPriority,
+          registryId: registries[0].id,
         }),
       })
 

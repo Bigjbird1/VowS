@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@/types/order";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, NotificationType } from "@prisma/client";
 
 interface OrderItem {
   product: {
@@ -11,20 +11,24 @@ interface OrderItem {
   };
 }
 
-type PrismaTransaction = Omit<
+type TransactionClient = Omit<
   PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const body = await request.json();
+    const orderId = body.orderId;
+
+    if (!orderId) {
+      return new NextResponse("Order ID is required", { status: 400 });
     }
 
     // Get seller profile
@@ -38,7 +42,7 @@ export async function PATCH(
 
     // Get the order and verify it contains seller's products
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: orderId },
       include: {
         items: {
           include: {
@@ -61,7 +65,6 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await request.json();
     const updateData: { status?: OrderStatus; trackingNumber?: string } = {};
 
     // Validate and set status update
@@ -100,10 +103,10 @@ export async function PATCH(
     }
 
     // Update the order
-    const updatedOrder = await prisma.$transaction(async (tx: PrismaTransaction) => {
+    const updatedOrder = await prisma.$transaction(async (tx: TransactionClient) => {
       // Update order
       const updated = await tx.order.update({
-        where: { id: params.id },
+        where: { id: orderId },
         data: updateData,
       });
 
@@ -111,7 +114,7 @@ export async function PATCH(
       if (updateData.status) {
         await tx.orderStatusHistory.create({
           data: {
-            orderId: params.id,
+            orderId: orderId,
             status: updateData.status,
             updatedBy: session.user.id,
             note: body.note,
@@ -127,7 +130,7 @@ export async function PATCH(
       await prisma.sellerNotification.create({
         data: {
           sellerId: seller.id,
-          type: "ORDER_CANCELLED",
+          type: NotificationType.ORDER,
           message: `Order #${order.id.slice(-8)} status updated to ${updateData.status}`,
         },
       });
@@ -140,15 +143,18 @@ export async function PATCH(
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const orderId = request.nextUrl.searchParams.get("orderId");
+    
+    if (!orderId) {
+      return new NextResponse("Order ID is required", { status: 400 });
     }
 
     // Get seller profile
@@ -162,7 +168,7 @@ export async function GET(
 
     // Get the order with all details
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: orderId },
       include: {
         items: {
           include: {

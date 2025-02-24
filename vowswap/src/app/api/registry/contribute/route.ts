@@ -4,27 +4,23 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AddGiftContributionRequest } from "@/types/registry";
 
-type Context = {
-  params: {
-    id: string;
-    itemId: string;
-  };
-};
-
-export async function POST(request: NextRequest, context: Context) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body: AddGiftContributionRequest = await request.json();
+    const body: AddGiftContributionRequest & {
+      registryId: string;
+      itemId: string;
+    } = await request.json();
 
     // Verify the item exists and belongs to the registry
     const item = await prisma.registryItem.findFirst({
       where: {
-        id: context.params.itemId,
-        registryId: context.params.id,
+        id: body.itemId,
+        registryId: body.registryId,
       },
       include: {
         product: true,
@@ -54,8 +50,7 @@ export async function POST(request: NextRequest, context: Context) {
     // Check if contribution would exceed the item price
     if (newTotal > item.product.price) {
       return new NextResponse(
-        `Contribution amount exceeds remaining balance. Maximum contribution: $${item.product.price - currentTotal
-        }`,
+        `Contribution amount exceeds remaining balance. Maximum contribution: $${item.product.price - currentTotal}`,
         { status: 400 }
       );
     }
@@ -75,30 +70,21 @@ export async function POST(request: NextRequest, context: Context) {
     if (newTotal === item.product.price) {
       await prisma.registryItem.update({
         where: { id: item.id },
-        data: {
-          status: "PURCHASED",
-        },
+        data: { status: "PURCHASED" },
       });
     } else if (item.status === "AVAILABLE" && newTotal > 0) {
       await prisma.registryItem.update({
         where: { id: item.id },
-        data: {
-          status: "RESERVED",
-        },
+        data: { status: "RESERVED" },
       });
     }
 
     return new NextResponse(JSON.stringify(contribution), {
       status: 201,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error processing contribution:", error);
-    return new NextResponse(
-      "An error occurred while processing your contribution",
-      { status: 500 }
-    );
+    return new NextResponse("An error occurred while processing your contribution", { status: 500 });
   }
 }

@@ -1,15 +1,13 @@
+"use client";
+
 import SignInForm from "@/components/auth/SignInForm";
 import Link from "next/link";
 import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-interface SignInPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-export default function SignInPage({
-  searchParams,
-}: SignInPageProps) {
-  const showSuccessMessage = typeof searchParams?.registered !== 'undefined';
+export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const showSuccessMessage = searchParams?.has('registered') ?? false;
 
   return (
     <>

@@ -1,18 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ProductUpdateInput } from "@/types/product";
+import { Prisma, ProductStatus } from "@prisma/client";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+type ProductUpdateData = Prisma.ProductUpdateInput;
+
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const body = await request.json();
+    const productId = body.productId;
+
+    if (!productId) {
+      return new NextResponse("Product ID is required", { status: 400 });
     }
 
     // Get seller profile
@@ -26,7 +32,7 @@ export async function PATCH(
 
     // Get the product and verify ownership
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: productId },
     });
 
     if (!product) {
@@ -37,25 +43,26 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await request.json();
-    const updateData: ProductUpdateInput = {};
+    const updateData: ProductUpdateData = {};
 
     // Only allow specific fields to be updated
-    if (typeof body.isVisible === "boolean") {
-      updateData.isVisible = body.isVisible;
-    }
     if (body.title) updateData.title = body.title;
     if (body.description) updateData.description = body.description;
     if (body.price) updateData.price = body.price;
+    if (body.salePrice !== undefined) updateData.salePrice = body.salePrice;
+    if (typeof body.isOnSale === "boolean") updateData.isOnSale = body.isOnSale;
     if (body.category) updateData.category = body.category;
+    if (body.subcategory !== undefined) updateData.subcategory = body.subcategory;
     if (body.condition) updateData.condition = body.condition;
+    if (body.tags) updateData.tags = body.tags;
     if (typeof body.inventory === "number") updateData.inventory = body.inventory;
-    if (body.status) updateData.status = body.status;
+    if (typeof body.freeShipping === "boolean") updateData.freeShipping = body.freeShipping;
+    if (body.status) updateData.status = body.status as ProductStatus;
     if (body.images) updateData.images = body.images;
 
     // Update the product
     const updatedProduct = await prisma.product.update({
-      where: { id: params.id },
+      where: { id: productId },
       data: updateData,
     });
 
@@ -66,15 +73,18 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const productId = request.nextUrl.searchParams.get("productId");
+
+    if (!productId) {
+      return new NextResponse("Product ID is required", { status: 400 });
     }
 
     // Get seller profile
@@ -88,7 +98,7 @@ export async function DELETE(
 
     // Get the product and verify ownership
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: productId },
     });
 
     if (!product) {
@@ -99,16 +109,15 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Instead of deleting, archive the product
-    const archivedProduct = await prisma.product.update({
-      where: { id: params.id },
+    // Instead of deleting, mark the product as deleted
+    const deletedProduct = await prisma.product.update({
+      where: { id: productId },
       data: {
-        status: "ARCHIVED",
-        isVisible: false,
+        status: ProductStatus.DELETED,
       },
     });
 
-    return NextResponse.json(archivedProduct);
+    return NextResponse.json(deletedProduct);
   } catch (error) {
     console.error("[PRODUCT_DELETE]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
