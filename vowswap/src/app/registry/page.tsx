@@ -7,10 +7,32 @@ import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import { Registry } from "@/types/registry"
 
-interface RegistryWithCount extends Registry {
+type PrismaRegistry = {
+  id: string
+  userId: string
+  title: string
+  eventDate: Date
+  eventType: string
+  description: string | null
+  privacyStatus: string
+  status: string
+  coupleName1: string
+  coupleName2: string | null
+  eventLocation: string
+  coverImage: string | null
+  thankyouMessage: string | null
+  uniqueUrl: string
+  createdAt: Date
+  updatedAt: Date
   _count: {
     items: number
   }
+  items: {
+    contributions: {
+      amount: number
+    }[]
+    status: string
+  }[]
 }
 
 export const metadata: Metadata = {
@@ -74,16 +96,16 @@ export default async function RegistryPage() {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {registries.map((registry: RegistryWithCount) => {
+          {registries.map((registry: PrismaRegistry) => {
             const totalItems = registry._count.items;
             const purchasedItems = registry.items.filter(
-              (item) => item.status === "PURCHASED"
+              (item: { status: string }) => item.status === "PURCHASED"
             ).length;
             const totalContributions = registry.items.reduce(
-              (sum, item) =>
+              (sum: number, item: { contributions: { amount: number }[] }) =>
                 sum +
                 item.contributions.reduce(
-                  (itemSum, contribution) => itemSum + contribution.amount,
+                  (itemSum: number, contribution: { amount: number }) => itemSum + contribution.amount,
                   0
                 ),
               0
@@ -116,7 +138,7 @@ export default async function RegistryPage() {
                     {registry.title}
                   </h3>
                   <div className="text-sm text-gray-500 mb-4">
-                    <p>{registry.coupleName1}{registry.coupleName2 ? ` & ${registry.coupleName2}` : &apos;&apos;}</p>
+                    <p>{registry.coupleName1}{registry.coupleName2 ? ` & ${registry.coupleName2}` : ''}</p>
                     <p>{formatDate(registry.eventDate)}</p>
                     <p>{registry.eventLocation}</p>
                   </div>
