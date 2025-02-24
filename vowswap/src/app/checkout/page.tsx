@@ -11,28 +11,16 @@ import { ReviewOrder } from "@/components/checkout/ReviewOrder";
 
 type CheckoutStep = "shipping" | "payment" | "review";
 
-interface ShippingData {
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-interface PaymentData {
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardholderName: string;
-}
+import { ShippingFormData } from "@/components/checkout/ShippingForm";
+import { PaymentFormData } from "@/components/checkout/PaymentForm";
 
 export default function CheckoutPage() {
   const { cart } = useCart();
   const router = useRouter();
   const { status } = useSession();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
-  const [shippingData, setShippingData] = useState<ShippingData | null>(null);
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentFormData | null>(null);
 
   // Redirect to sign in if not authenticated
   if (status === "unauthenticated") {
@@ -52,12 +40,12 @@ export default function CheckoutPage() {
     { id: "review", label: "Review" },
   ];
 
-  const handleShippingSubmit = (data: ShippingData) => {
+  const handleShippingSubmit = (data: ShippingFormData) => {
     setShippingData(data);
     setCurrentStep("payment");
   };
 
-  const handlePaymentSubmit = (data: PaymentData) => {
+  const handlePaymentSubmit = (data: PaymentFormData) => {
     setPaymentData(data);
     setCurrentStep("review");
   };

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ProductFormData } from "@/types/product";
+import { ProductFormData, ProductStatus } from "@/types/product";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -46,8 +47,6 @@ export async function POST(request: Request) {
         condition: data.condition,
         inventory: data.inventory,
         status: data.status,
-        isVisible: data.status === "ACTIVE",
-        viewCount: 0,
       },
     });
 
@@ -90,12 +89,12 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
 
     // Build filter conditions
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       sellerId: seller.id,
     };
 
     if (status) {
-      where.status = status;
+      where.status = status as ProductStatus;
     }
 
     if (category) {

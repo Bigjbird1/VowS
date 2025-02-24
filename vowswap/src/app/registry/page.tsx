@@ -116,7 +116,7 @@ export default async function RegistryPage() {
                     {registry.title}
                   </h3>
                   <div className="text-sm text-gray-500 mb-4">
-                    <p>{registry.coupleName1}{registry.coupleName2 ? ` & ${registry.coupleName2}` : ''}</p>
+                    <p>{registry.coupleName1}{registry.coupleName2 ? ` & ${registry.coupleName2}` : &apos;&apos;}</p>
                     <p>{formatDate(registry.eventDate)}</p>
                     <p>{registry.eventLocation}</p>
                   </div>

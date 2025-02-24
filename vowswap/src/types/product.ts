@@ -7,7 +7,7 @@ export type SortOption =
   | 'rating'
   | 'recently_added';
 
-export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED' | 'DRAFT' | 'ARCHIVED';
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 export interface ProductFilters {
   category?: string;
