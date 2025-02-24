@@ -10,23 +10,6 @@
     "CRON_SECRET": "04cb037170153f8c30bf9ed8023dcabf2942d80511eef1838149c7224de625be"
   },
   "regions": ["iad1"],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-{
   "build": {
     "env": {
       "NEXTAUTH_URL": "$NEXTAUTH_URL",
@@ -34,11 +17,7 @@
       "SENTRY_ORG": "$SENTRY_ORG",
       "SENTRY_PROJECT": "$SENTRY_PROJECT"
     }
-  }
-}
-      ]
-    }
-  ],
+  },
   "crons": [
     {
       "path": "/api/cron/cleanup-expired-sessions",
