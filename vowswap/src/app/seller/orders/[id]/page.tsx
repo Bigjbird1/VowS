@@ -15,11 +15,16 @@ interface ExtendedOrderItem extends OrderItem {
   };
 }
 
+interface SellerOrderPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
 export default async function SellerOrderDetailsPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: SellerOrderPageProps) {
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -35,7 +40,7 @@ export default async function SellerOrderDetailsPage({
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       items: {
         include: {

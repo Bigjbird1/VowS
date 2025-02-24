@@ -7,9 +7,9 @@ import { authOptions } from "@/lib/auth"
 import { Registry, RegistryItemWithProduct } from "@/types/registry"
 
 interface RegistryPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 type PrismaProduct = {
@@ -45,8 +45,9 @@ function isValidRegistryItem(
 export async function generateMetadata({
   params,
 }: RegistryPageProps): Promise<Metadata> {
+  const resolvedParams = await params
   const registry = await prisma.registry.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     select: { title: true, description: true },
   })
 
@@ -63,9 +64,10 @@ export async function generateMetadata({
 }
 
 export default async function RegistryPage({ params }: RegistryPageProps) {
+  const resolvedParams = await params
   const session = await getServerSession(authOptions)
   const registry = await prisma.registry.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       items: {
         include: {
@@ -98,7 +100,7 @@ export default async function RegistryPage({ params }: RegistryPageProps) {
     registry.userId !== session?.user?.id
   ) {
     if (!session) {
-      redirect("/auth/signin?callbackUrl=/registry/" + params.id)
+      redirect("/auth/signin?callbackUrl=/registry/" + resolvedParams.id)
     }
     return (
       <div className="container mx-auto px-4 py-8">

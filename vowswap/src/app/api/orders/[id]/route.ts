@@ -64,9 +64,9 @@ type TransactionClient = Omit<
 >;
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -122,9 +122,9 @@ export async function GET(
 }
 
 export async function PATCH(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -144,7 +144,7 @@ export async function PATCH(
       );
     }
 
-    const data = await req.json() as OrderUpdateInput;
+    const data = await request.json() as OrderUpdateInput;
     const { status, trackingNumber, notes } = data;
 
     const order = await prisma.$transaction<OrderWithUser>(async (prisma: TransactionClient) => {
@@ -247,9 +247,9 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {

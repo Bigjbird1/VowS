@@ -7,9 +7,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 interface OrdersTableProps {
   orders: Order[];
+  total: number;
 }
 
-export default function OrdersTable({ orders }: OrdersTableProps) {
+export default function OrdersTable({ orders, total }: OrdersTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,8 +30,12 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div>
+      <div className="mb-4 text-sm text-gray-600">
+        Total Orders: {total}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th
@@ -106,7 +111,8 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

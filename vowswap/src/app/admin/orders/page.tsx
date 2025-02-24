@@ -3,18 +3,19 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import OrdersTable from "@/components/admin/OrdersTable";
-import { OrderStatus } from "@/types/order";
+import { Order, OrderStatus } from "@/types/order";
 
 interface OrdersPageProps {
-  searchParams: {
+  searchParams: Promise<{
     status?: OrderStatus;
     page?: string;
     limit?: string;
     search?: string;
-  };
+  }>;
 }
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
+  const resolvedSearchParams = await searchParams;
   const session = await getServerSession(authOptions);
   
   if (!session?.user) {
@@ -27,14 +28,14 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     select: { role: true },
   });
 
-  if (user?.role !== "admin") {
+  if (user?.role !== "ADMIN") {
     redirect("/");
   }
 
-  const page = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "10");
-  const status = searchParams.status as OrderStatus | undefined;
-  const search = searchParams.search;
+  const page = parseInt(resolvedSearchParams.page || "1");
+  const limit = parseInt(resolvedSearchParams.limit || "10");
+  const status = resolvedSearchParams.status as OrderStatus | undefined;
+  const search = resolvedSearchParams.search;
 
   const where = {
     ...(status && { status }),
@@ -47,7 +48,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     }),
   };
 
-  const [orders, total] = await Promise.all([
+  const [ordersData, total] = await Promise.all([
     prisma.order.findMany({
       where,
       include: {
@@ -68,6 +69,14 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           },
         },
         statusHistory: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
           orderBy: {
             createdAt: "desc",
           },
@@ -83,34 +92,18 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     prisma.order.count({ where }),
   ]);
 
-  // Get order status counts for filters
-  const statusCounts = await prisma.order.groupBy({
-    by: ["status"],
-    _count: true,
-  });
-
-  const filters = {
-    status: Object.fromEntries(
-      statusCounts.map((item) => [
-        item.status,
-        item._count,
-      ])
-    ),
-  };
+  // Convert null to undefined for optional fields
+  const orders: Order[] = ordersData.map(order => ({
+    ...order,
+    paymentIntent: order.paymentIntent ?? undefined,
+    trackingNumber: order.trackingNumber ?? undefined,
+    notes: order.notes ?? undefined,
+  }));
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Order Management</h1>
-      <OrdersTable
-        orders={orders}
-        pagination={{
-          total,
-          pages: Math.ceil(total / limit),
-          current: page,
-        }}
-        filters={filters}
-        currentStatus={status}
-      />
+      <OrdersTable orders={orders} total={total} />
     </div>
   );
 }
