@@ -7,6 +7,16 @@ export type EventType = "WEDDING" | "ENGAGEMENT" | "ANNIVERSARY" | "OTHER"
 export type ItemPriority = "HIGH" | "MEDIUM" | "LOW"
 export type ItemStatus = "AVAILABLE" | "RESERVED" | "PURCHASED"
 
+export interface CustomItemDetails {
+  name: string;
+  description?: string;
+  url?: string;
+  price: number;
+  imageUrl?: string;
+  brand?: string;
+  retailer?: string;
+}
+
 export interface Registry {
   id: string
   userId: string
@@ -37,7 +47,7 @@ export interface RegistryItem {
   status: ItemStatus
   note?: string | null
   customItem: boolean
-  customItemDetails?: any | null
+  customItemDetails?: CustomItemDetails | null
   createdAt: Date
   updatedAt: Date
   registry: Registry
@@ -103,7 +113,7 @@ export interface AddRegistryItemRequest {
   priority?: ItemPriority
   note?: string
   customItem?: boolean
-  customItemDetails?: any
+  customItemDetails?: CustomItemDetails
 }
 
 export interface UpdateRegistryItemRequest {
@@ -111,7 +121,7 @@ export interface UpdateRegistryItemRequest {
   priority?: ItemPriority
   status?: ItemStatus
   note?: string
-  customItemDetails?: any
+  customItemDetails?: CustomItemDetails
 }
 
 export interface AddGiftContributionRequest {

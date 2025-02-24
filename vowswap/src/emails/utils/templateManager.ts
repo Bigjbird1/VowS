@@ -132,21 +132,6 @@ function isTemplateName(name: string): name is TemplateName {
   return Object.values(TEMPLATE_NAMES).includes(name as TemplateName);
 }
 
-function isTemplateType(value: any): value is TemplateType {
-  return (
-    value &&
-    typeof value === 'object' &&
-    'name' in value &&
-    'subject' in value &&
-    'component' in value &&
-    'sampleData' in value &&
-    'variables' in value &&
-    isTemplateName(value.name) &&
-    typeof value.subject === 'string' &&
-    Array.isArray(value.variables)
-  );
-}
-
 async function renderTemplate<K extends keyof TemplateConfig>(
   template: TemplateConfig[K]
 ): Promise<{ html: string; text: string }> {
@@ -180,7 +165,7 @@ export async function generateAndSaveTemplates() {
 
   const templateEntries = (Object.entries(templates) as Array<[keyof TemplateConfig, TemplateType]>);
   
-  for (const [componentName, template] of templateEntries) {
+  for (const [, template] of templateEntries) {
     console.log(`Processing template: ${template.name}`);
 
     try {
@@ -221,17 +206,21 @@ export async function generateAndSaveTemplates() {
 // Function to validate template variables
 export function validateTemplateVariables(
   templateName: string,
-  variables: Record<string, any>
+  variables: Record<string, string | number | boolean>
 ): boolean {
   if (!isTemplateName(templateName)) {
     throw new Error(`Invalid template name: ${templateName}`);
   }
 
-  const template = Object.values(templates).find(t => isTemplateType(t) && t.name === templateName);
-
-  if (!template) {
-    throw new Error(`Template '${templateName}' not found`);
+  function findTemplate(name: string): TemplateType {
+    const found = Object.values(templates).find(t => t.name === name);
+    if (!found) {
+      throw new Error(`Template '${name}' not found`);
+    }
+    return found;
   }
+
+  const template = findTemplate(templateName);
 
   const missingVariables = template.variables.filter(
     variable => !(variable in variables)

@@ -33,10 +33,9 @@ interface Order {
 
 interface SellerOrderListProps {
   orders: Order[];
-  sellerId: string;
 }
 
-export default function SellerOrderList({ orders, sellerId }: SellerOrderListProps) {
+export default function SellerOrderList({ orders }: SellerOrderListProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState<string>("");
 

@@ -7,7 +7,8 @@ import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import { Wishlist } from "@/types/wishlist"
 
-interface WishlistWithCount extends Wishlist {
+// Omit the items and user since they won't be included in the query
+type WishlistWithCount = Omit<Wishlist, 'items' | 'user'> & {
   _count: {
     items: number
   }
@@ -55,7 +56,7 @@ export default async function WishlistsPage() {
 
       {wishlists.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">You haven't created any wishlists yet.</p>
+          <p className="text-gray-500 mb-4">You haven&apos;t created any wishlists yet.</p>
           <Link
             href="/wishlist/new"
             className="text-blue-600 hover:text-blue-800 font-medium"

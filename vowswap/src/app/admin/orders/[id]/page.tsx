@@ -4,13 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import OrderDetails from "@/components/admin/OrderDetails";
 
-interface OrderPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function OrderPage({ params }: OrderPageProps) {
+export default async function OrderPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user) {
@@ -23,11 +21,11 @@ export default async function OrderPage({ params }: OrderPageProps) {
     select: { role: true },
   });
 
-  if (user?.role !== "admin") {
+  if (!user || user.role !== "ADMIN") {
     redirect("/");
   }
 
-  const order = await prisma.order.findUnique({
+  const orderData = await prisma.order.findUnique({
     where: { id: params.id },
     include: {
       user: {
@@ -62,6 +60,14 @@ export default async function OrderPage({ params }: OrderPageProps) {
       },
     },
   });
+
+  // Convert null to undefined for optional fields
+  const order = orderData ? {
+    ...orderData,
+    paymentIntent: orderData.paymentIntent || undefined,
+    trackingNumber: orderData.trackingNumber || undefined,
+    notes: orderData.notes || undefined,
+  } : null;
 
   if (!order) {
     redirect("/admin/orders");

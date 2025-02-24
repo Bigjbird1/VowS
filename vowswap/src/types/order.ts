@@ -28,8 +28,8 @@ export interface Order {
   items: OrderItem[];
   statusHistory: OrderStatusHistory[];
   user: {
-    name?: string;
-    email?: string;
+    name: string | null;
+    email: string;
   };
 }
 
@@ -37,12 +37,12 @@ export interface OrderStatusHistory {
   id: string;
   orderId: string;
   status: OrderStatus;
-  note?: string;
+  note: string | null;
   createdAt: Date;
   updatedBy: string;
   user: {
-    name?: string;
-    email?: string;
+    name: string | null;
+    email: string;
   };
 }
 

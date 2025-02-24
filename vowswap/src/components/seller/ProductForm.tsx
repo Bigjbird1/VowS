@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductFormData, ProductStatus } from "@/types/product";
-import { formatCurrency } from "@/lib/utils";
 
 interface ProductFormProps {
   initialData?: ProductFormData & { id?: string };

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
-import { Order, OrderItem, OrderStatusHistory } from "@/types/order";
+import { OrderItem, OrderStatusHistory } from "@/types/order";
 
 interface ExtendedOrderItem extends OrderItem {
   product: {
@@ -13,11 +13,6 @@ interface ExtendedOrderItem extends OrderItem {
     title: string;
     images: string[];
   };
-}
-
-interface ExtendedOrder extends Order {
-  items: ExtendedOrderItem[];
-  statusHistory: OrderStatusHistory[];
 }
 
 export default async function SellerOrderDetailsPage({

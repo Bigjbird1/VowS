@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CartProvider, useCart } from '../cart';
-import { mockProduct, mockCart } from '@/test/utils';
+import { mockProduct } from '@/test/utils';
 import { CartContextType } from '@/types/cart';
 
 const TestComponent = () => {

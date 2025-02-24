@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import RegistryDetails from "@/components/registry/RegistryDetails"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { Registry, RegistryItem, RegistryItemWithProduct } from "@/types/registry"
+import { Registry, RegistryItemWithProduct } from "@/types/registry"
 
 interface RegistryPageProps {
   params: {
@@ -20,7 +20,7 @@ type PrismaProduct = {
   category: string
 } | null
 
-type PrismaRegistryItem = Omit<RegistryItem, "product"> & {
+type PrismaRegistryItem = Omit<RegistryItemWithProduct, "product"> & {
   product: PrismaProduct
   contributions: {
     amount: number
@@ -120,14 +120,12 @@ export default async function RegistryPage({ params }: RegistryPageProps) {
     .map((item) => ({
       ...item,
       product: item.product,
-    })) as RegistryItemWithProduct[]
+    }))
 
-  return (
-    <RegistryDetails
-      registry={{
-        ...registry,
-        items: validItems,
-      }}
-    />
-  )
+  const registryWithItems = {
+    ...registry,
+    items: validItems,
+  } as Registry & { items: RegistryItemWithProduct[] }
+
+  return <RegistryDetails registry={registryWithItems} />
 }

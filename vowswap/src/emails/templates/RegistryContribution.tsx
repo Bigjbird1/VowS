@@ -36,12 +36,12 @@ export const RegistryContribution: React.FC<RegistryContributionProps> = ({
           <CardHeading>New Registry Contribution!</CardHeading>
           <CardContent>
             <Text>
-              Great news! {contributorName} has contributed ${contributionAmount.toFixed(2)} toward {itemName} on your registry "{registryTitle}".
+              Great news! {contributorName} has contributed ${contributionAmount.toFixed(2)} toward {itemName} on your registry &quot;{registryTitle}&quot;.
             </Text>
             {message && (
               <Card border={true}>
                 <CardContent>
-                  <Text style={{ fontStyle: 'italic' }}>"{message}"</Text>
+                  <Text style={{ fontStyle: 'italic' }}>&quot;{message}&quot;</Text>
                 </CardContent>
               </Card>
             )}
@@ -84,12 +84,12 @@ export const RegistryContribution: React.FC<RegistryContributionProps> = ({
 
   // Contributor version
   return (
-    <BaseLayout preview={`Thank you for contributing to ${ownerName}'s registry`}>
+    <BaseLayout preview={`Thank you for contributing to ${ownerName}&apos;s registry`}>
       <Card>
         <CardHeading>Thank You for Your Contribution!</CardHeading>
         <CardContent>
           <Text>
-            Thank you for contributing ${contributionAmount.toFixed(2)} toward {itemName} on {ownerName}'s registry "{registryTitle}".
+            Thank you for contributing ${contributionAmount.toFixed(2)} toward {itemName} on {ownerName}&apos;s registry &quot;{registryTitle}&quot;.
           </Text>
           <Text>
             Your generosity helps make their special day even more memorable.
@@ -101,7 +101,7 @@ export const RegistryContribution: React.FC<RegistryContributionProps> = ({
         <Card>
           <CardHeading>Your Message</CardHeading>
           <CardContent>
-            <Text style={{ fontStyle: 'italic' }}>"{message}"</Text>
+            <Text style={{ fontStyle: 'italic' }}>&quot;{message}&quot;</Text>
           </CardContent>
         </Card>
       )}

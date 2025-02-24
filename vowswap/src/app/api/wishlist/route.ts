@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { CreateWishlistRequest } from "@/types/registry"
+import { CreateWishlistRequest } from "@/types/wishlist"
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -45,13 +45,7 @@ export async function GET(req: NextRequest) {
       where: {
         OR: [
           { userId: session.user.id },
-          { privacyStatus: "PUBLIC" },
-          {
-            AND: [
-              { privacyStatus: "SHARED" },
-              // Add additional shared access logic here if needed
-            ],
-          },
+          { isPublic: true },
         ],
       },
       include: {
@@ -64,7 +58,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             name: true,
-            image: true,
+            email: true,
           },
         },
       },

@@ -87,7 +87,7 @@ export default function ProductsPage() {
             {/* Results Header */}
             <div className="mb-6">
               <h1 className="text-xl font-semibold text-gray-900">
-                {query ? `Search results for "${query}"` : 'All Products'}
+                {query ? `Search results for &quot;${query}&quot;` : 'All Products'}
               </h1>
               {searchResults && (
                 <p className="mt-1 text-sm text-gray-500">
@@ -159,7 +159,7 @@ export default function ProductsPage() {
                   No products found
                 </h3>
                 <p className="text-gray-500">
-                  Try adjusting your search or filters to find what you're looking for.
+                  Try adjusting your search or filters to find what you&apos;re looking for.
                 </p>
               </div>
             )}

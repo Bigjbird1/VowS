@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { ProductFilters, SortOption } from '@/types/product';
+import { ProductFilters } from '@/types/product';
 
 interface SearchContextType {
   query: string;

@@ -33,7 +33,7 @@ export default function OrdersList({ orders, pagination }: OrdersListProps) {
           No orders found
         </h2>
         <p className="text-gray-500 mb-6">
-          You haven't placed any orders yet.
+          You haven&apos;t placed any orders yet.
         </p>
         <Link
           href="/products"

@@ -14,13 +14,13 @@ export const Welcome: React.FC<WelcomeEmailProps> = ({
   verificationUrl,
 }) => {
   return (
-    <BaseLayout preview="Welcome to VowSwap - Let's make your wedding dreams come true">
+    <BaseLayout preview="Welcome to VowSwap - Let&apos;s make your wedding dreams come true">
       <Card>
         <CardHeading>Welcome to VowSwap!</CardHeading>
         <CardContent>
           <Text>Dear {name},</Text>
           <Text>
-            Welcome to VowSwap! We're thrilled to have you join our community of couples and wedding enthusiasts. 
+            Welcome to VowSwap! We&apos;re thrilled to have you join our community of couples and wedding enthusiasts. 
             Your journey to creating the perfect wedding experience starts here.
           </Text>
         </CardContent>
@@ -38,7 +38,7 @@ export const Welcome: React.FC<WelcomeEmailProps> = ({
       <Card>
         <CardHeading>Getting Started</CardHeading>
         <CardContent>
-          <Text>Here's what you can do on VowSwap:</Text>
+          <Text>Here&apos;s what you can do on VowSwap:</Text>
           <ul style={{ paddingLeft: '20px', lineHeight: '24px' }}>
             <li>Create your wedding registry</li>
             <li>Browse unique wedding items</li>

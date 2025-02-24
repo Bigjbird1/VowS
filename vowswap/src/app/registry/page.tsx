@@ -4,8 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import Image from "next/image"
 import { formatDate } from "@/lib/utils"
-import { Registry } from "@/types/registry"
 
 type PrismaRegistry = {
   id: string
@@ -86,7 +86,7 @@ export default async function RegistryPage() {
 
       {registries.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">You haven't created any registries yet.</p>
+          <p className="text-gray-500 mb-4">You haven&apos;t created any registries yet.</p>
           <Link
             href="/registry/new"
             className="text-blue-600 hover:text-blue-800 font-medium"
@@ -119,10 +119,12 @@ export default async function RegistryPage() {
               >
                 <div className="relative h-48 rounded-t-lg overflow-hidden">
                   {registry.coverImage ? (
-                    <img
+                    <Image
                       src={registry.coverImage}
                       alt={registry.title}
                       className="w-full h-full object-cover"
+                      width={400}
+                      height={300}
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">

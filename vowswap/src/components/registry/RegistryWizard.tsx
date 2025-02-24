@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { CreateRegistryRequest, PrivacyStatus } from "@/types/registry"
+import { PrivacyStatus } from "@/types/registry"
 
 const registrySchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -48,8 +48,7 @@ export default function RegistryWizard() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    watch,
+    formState: { errors }
   } = useForm<RegistryFormData>({
     resolver: zodResolver(registrySchema),
     defaultValues: {
@@ -81,7 +80,6 @@ export default function RegistryWizard() {
     }
   }
 
-  const currentStepFields = steps[currentStep].fields
   const isLastStep = currentStep === steps.length - 1
 
   return (

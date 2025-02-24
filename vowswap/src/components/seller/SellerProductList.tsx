@@ -9,10 +9,9 @@ import { formatCurrency } from "@/lib/utils";
 
 interface SellerProductListProps {
   products: Product[];
-  sellerId: string;
 }
 
-export default function SellerProductList({ products, sellerId }: SellerProductListProps) {
+export default function SellerProductList({ products }: SellerProductListProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   const handleVisibilityToggle = async (productId: string, currentVisibility: boolean) => {
@@ -46,8 +45,10 @@ export default function SellerProductList({ products, sellerId }: SellerProductL
         return "bg-green-100 text-green-800";
       case "DRAFT":
         return "bg-yellow-100 text-yellow-800";
-      case "ARCHIVED":
+      case "INACTIVE":
         return "bg-gray-100 text-gray-800";
+      case "DELETED":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -131,7 +132,7 @@ export default function SellerProductList({ products, sellerId }: SellerProductL
                   </Link>
                   <button
                     onClick={() =>
-                      handleVisibilityToggle(product.id, product.isVisible)
+                      handleVisibilityToggle(product.id, product.isVisible || false)
                     }
                     disabled={isUpdating === product.id}
                     className="text-gray-600 hover:text-gray-900 disabled:opacity-50"

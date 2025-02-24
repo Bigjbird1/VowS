@@ -1,5 +1,5 @@
 import { Seller, SellerSettings, SellerAnalytics, SellerNotification, Product } from "@prisma/client";
-import { OrderStatus, SellerVerificationStatus, PayoutSchedule, ProductStatus, NotificationType } from "@prisma/client";
+import { OrderStatus, PayoutSchedule, ProductStatus } from "@prisma/client";
 
 export type SellerWithRelations = Seller & {
   products: Product[];

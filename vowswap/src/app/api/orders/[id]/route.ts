@@ -5,8 +5,35 @@ import { authOptions } from "@/lib/auth";
 import { OrderStatus, OrderUpdateInput } from "@/types/order";
 import { Resend } from "resend";
 import type { PrismaClient, Prisma } from "@prisma/client";
+import type { UserRole } from "@prisma/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+type OrderWithUser = Prisma.OrderGetPayload<{
+  include: {
+    user: {
+      select: {
+        email: true;
+      };
+    };
+  };
+}>;
+
+export type OrderWithDetails = Prisma.OrderGetPayload<{
+  include: {
+    items: {
+      include: {
+        product: true;
+      };
+    };
+    statusHistory: true;
+    user: {
+      select: {
+        email: true;
+      };
+    };
+  };
+}>;
 
 const STATUS_EMAIL_TEMPLATES: Record<OrderStatus, { subject: string; body: string }> = {
   PROCESSING: {
@@ -33,7 +60,7 @@ const STATUS_EMAIL_TEMPLATES: Record<OrderStatus, { subject: string; body: strin
 
 type TransactionClient = Omit<
   PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;
 
 export async function GET(
@@ -80,7 +107,7 @@ export async function GET(
     }
 
     // Only allow admin or order owner to view the order
-    if (user?.role !== "admin" && order.userId !== session.user.id) {
+    if (user?.role !== ("admin" as UserRole) && order.userId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -110,7 +137,7 @@ export async function PATCH(
       select: { role: true },
     });
 
-    if (user?.role !== "admin") {
+    if (user?.role !== ("admin" as UserRole)) {
       return NextResponse.json(
         { error: "Only admins can update orders" },
         { status: 401 }
@@ -120,9 +147,9 @@ export async function PATCH(
     const data = await req.json() as OrderUpdateInput;
     const { status, trackingNumber, notes } = data;
 
-    const order = await prisma.$transaction(async (tx: TransactionClient) => {
+    const order = await prisma.$transaction<OrderWithUser>(async (prisma: TransactionClient) => {
       // Get the order with user info for email notification
-      const order = await tx.order.findUnique({
+      const order = await prisma.order.findUnique({
         where: { id: params.id },
         include: {
           user: {
@@ -138,7 +165,7 @@ export async function PATCH(
       }
 
       // Update the order
-      const updatedOrder = await tx.order.update({
+      const updatedOrder = await prisma.order.update({
         where: { id: params.id },
         data: {
           ...(status && { status }),
@@ -153,17 +180,16 @@ export async function PATCH(
           },
         },
         include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-          statusHistory: true,
-        },
+          user: {
+            select: {
+              email: true
+            }
+          }
+        }
       });
 
       // Log admin action
-      await tx.adminAction.create({
+      await prisma.adminAction.create({
         data: {
           userId: session.user.id,
           action: "UPDATE_ORDER",
@@ -253,9 +279,9 @@ export async function DELETE(
       );
     }
 
-    const updatedOrder = await prisma.$transaction(async (tx: TransactionClient) => {
+    const updatedOrder = await prisma.$transaction<OrderWithUser>(async (prisma: TransactionClient) => {
       // Update order status to CANCELLED
-      const updatedOrder = await tx.order.update({
+      const updatedOrder = await prisma.order.update({
         where: { id: params.id },
         data: {
           status: "CANCELLED",
@@ -267,15 +293,22 @@ export async function DELETE(
             },
           },
         },
+        include: {
+          user: {
+            select: {
+              email: true
+            }
+          }
+        }
       });
 
       // Restore inventory
-      const orderItems = await tx.orderItem.findMany({
+      const orderItems = await prisma.orderItem.findMany({
         where: { orderId: params.id },
       });
 
       for (const item of orderItems) {
-        await tx.product.update({
+        await prisma.product.update({
           where: { id: item.productId },
           data: {
             inventory: {

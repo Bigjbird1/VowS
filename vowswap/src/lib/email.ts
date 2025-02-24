@@ -1,20 +1,14 @@
 import { Resend } from 'resend';
-import { render } from '@react-email/render';
 import { prisma } from './prisma';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export type EmailTemplateData = {
-  [key: string]: any;
-};
+export type EmailTemplateData = Record<string, string | number | boolean>;
 
 export type SendEmailOptions = {
   to: string;
   templateName: string;
   templateData: EmailTemplateData;
-  userId?: string;
-  orderId?: string;
-  registryId?: string;
 };
 
 export class EmailService {
@@ -37,9 +31,6 @@ export class EmailService {
     to,
     templateName,
     templateData,
-    userId,
-    orderId,
-    registryId,
   }: SendEmailOptions) {
     try {
       // Get template from database
@@ -64,25 +55,22 @@ export class EmailService {
         subject = subject.replace(regex, String(value));
       }
 
-      // Create email log entry
-      const emailLog = await prisma.emailLog.create({
+      // Create email log entry first
+      await prisma.emailLog.create({
         data: {
-          templateId: template.id,
-          userId,
-          orderId,
-          registryId,
-          recipient: to,
+          to,
           subject,
-          content: htmlContent,
           status: 'QUEUED',
-          metadata: templateData,
         },
       });
 
-      // Create queue entry
-      await prisma.emailQueue.create({
+      // Create email queue entry
+      const queuedEmail = await prisma.emailQueue.create({
         data: {
-          emailLogId: emailLog.id,
+          to,
+          subject,
+          html: htmlContent,
+          text: textContent,
           status: 'PENDING',
         },
       });
@@ -90,7 +78,7 @@ export class EmailService {
       // Start queue processing if not already running
       this.startQueueProcessing();
 
-      return emailLog;
+      return queuedEmail;
     } catch (error) {
       console.error('Error queueing email:', error);
       throw error;
@@ -118,12 +106,8 @@ export class EmailService {
             {
               status: 'FAILED',
               attempts: { lt: 3 },
-              nextAttempt: { lte: new Date() },
             },
           ],
-        },
-        include: {
-          emailLog: true,
         },
       });
 
@@ -136,9 +120,17 @@ export class EmailService {
         // Send email using Resend
         await resend.emails.send({
           from: 'VowSwap <noreply@vowswap.com>',
-          to: queuedEmail.emailLog.recipient,
-          subject: queuedEmail.emailLog.subject,
-          html: queuedEmail.emailLog.content,
+          to: queuedEmail.to,
+          subject: queuedEmail.subject,
+          html: queuedEmail.html,
+        });
+
+        // Find the corresponding email log
+        const emailLog = await prisma.emailLog.findFirst({
+          where: {
+            to: queuedEmail.to,
+            subject: queuedEmail.subject,
+          },
         });
 
         // Update queue and log status
@@ -150,39 +142,45 @@ export class EmailService {
               updatedAt: new Date(),
             },
           }),
-          prisma.emailLog.update({
-            where: { id: queuedEmail.emailLogId },
-            data: {
-              status: 'SENT',
-              sentAt: new Date(),
-              updatedAt: new Date(),
-            },
-          }),
+          ...(emailLog ? [
+            prisma.emailLog.update({
+              where: { id: emailLog.id },
+              data: {
+                status: 'SENT',
+                updatedAt: new Date(),
+              },
+            }),
+          ] : []),
         ]);
       } catch (error) {
-        const nextAttempt = new Date();
-        nextAttempt.setMinutes(nextAttempt.getMinutes() + Math.pow(2, queuedEmail.attempts));
-
         await prisma.emailQueue.update({
           where: { id: queuedEmail.id },
           data: {
             status: 'FAILED',
             attempts: queuedEmail.attempts + 1,
-            lastError: error instanceof Error ? error.message : 'Unknown error',
-            nextAttempt: nextAttempt,
+            error: error instanceof Error ? error.message : 'Unknown error',
             updatedAt: new Date(),
           },
         });
 
         if (queuedEmail.attempts + 1 >= 3) {
-          await prisma.emailLog.update({
-            where: { id: queuedEmail.emailLogId },
-            data: {
-              status: 'FAILED',
-              error: error instanceof Error ? error.message : 'Unknown error',
-              updatedAt: new Date(),
+          const emailLog = await prisma.emailLog.findFirst({
+            where: {
+              to: queuedEmail.to,
+              subject: queuedEmail.subject,
             },
           });
+
+          if (emailLog) {
+            await prisma.emailLog.update({
+              where: { id: emailLog.id },
+              data: {
+                status: 'FAILED',
+                error: error instanceof Error ? error.message : 'Unknown error',
+                updatedAt: new Date(),
+              },
+            });
+          }
         }
       }
     } finally {

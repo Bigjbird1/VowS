@@ -1,7 +1,6 @@
 "use client";
 
 import { useCart } from "@/contexts/cart";
-import { CartItem } from "@/components/cart/CartItem";
 import { ShippingFormData } from "./ShippingForm";
 import { PaymentFormData } from "./PaymentForm";
 import Image from "next/image";
@@ -11,14 +10,12 @@ import { useRouter } from "next/navigation";
 interface ReviewOrderProps {
   shippingData: ShippingFormData;
   paymentData: PaymentFormData;
-  onSubmit: () => void;
   onBack: () => void;
 }
 
 export function ReviewOrder({
   shippingData,
   paymentData,
-  onSubmit,
   onBack,
 }: ReviewOrderProps) {
   const { cart, clearCart } = useCart();

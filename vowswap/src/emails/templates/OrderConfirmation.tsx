@@ -54,7 +54,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
         <CardHeading>Order Confirmation</CardHeading>
         <CardContent>
           <Text>Dear {customerName},</Text>
-          <Text>Thank you for your order! We're excited to help make your special day even more memorable.</Text>
+          <Text>Thank you for your order! We&apos;re excited to help make your special day even more memorable.</Text>
           <Text>Order Number: {orderNumber}</Text>
         </CardContent>
       </Card>
@@ -99,7 +99,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
       <Card border={false}>
         <CardContent>
           <Text>
-            If you have any questions about your order, please don't hesitate to contact our support team.
+            If you have any questions about your order, please don&apos;t hesitate to contact our support team.
           </Text>
           <Text>
             Best regards,<br />
