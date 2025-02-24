@@ -3,6 +3,7 @@
 import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { useCart } from "@/contexts/cart";
+import Link from "next/link";
 
 export default function CartPage() {
   const { cart } = useCart();
@@ -25,12 +26,12 @@ export default function CartPage() {
               <p className="text-gray-500 mb-4">
                 Looks like you haven&apos;t added any items to your cart yet.
               </p>
-              <a
+              <Link
                 href="/products"
                 className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Continue Shopping
-              </a>
+              </Link>
             </div>
           )}
         </div>

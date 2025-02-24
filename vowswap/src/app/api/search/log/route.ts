@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       await prisma.product.update({
         where: { id: clickedProductId },
         data: {
-          viewCount: {
+          salesCount: {
             increment: 1,
           },
         },
@@ -136,9 +136,11 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Process filter data
+    type FilterValue = string | number | boolean | string[];
+    
     const filterCounts: Record<string, number> = {};
     popularFilters.forEach(log => {
-      const filters = log.filters as Record<string, any>;
+      const filters = log.filters as Record<string, FilterValue>;
       Object.keys(filters).forEach(key => {
         filterCounts[key] = (filterCounts[key] || 0) + 1;
       });

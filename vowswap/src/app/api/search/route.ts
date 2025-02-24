@@ -7,13 +7,6 @@ import { Prisma } from '@prisma/client';
 
 const PAGE_SIZE = 12;
 
-interface SearchParams {
-  q?: string;
-  page?: string;
-  filters?: ProductFilters;
-  sortBy?: SortOption;
-}
-
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,9 +21,8 @@ export async function GET(request: Request) {
     // Build the where clause
     const where: Prisma.ProductWhereInput = {
       AND: [
-        // Status and visibility
+        // Only show active products
         { status: 'ACTIVE' },
-        { isVisible: true },
 
         // Search query
         query ? {
@@ -111,7 +103,7 @@ export async function GET(request: Request) {
       include: {
         seller: {
           select: {
-            name: true,
+            storeName: true,
           },
         },
       },
