@@ -1,16 +1,13 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd vowswap && npm run build",
-  "outputDirectory": "vowswap/.next",
-  "devCommand": "cd vowswap && npm run dev",
-  "installCommand": "cd vowswap && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
   "env": {
     "NEXTAUTH_URL": "https://vowswap.vercel.app",
     "NODE_ENV": "production",
     "CRON_SECRET": "04cb037170153f8c30bf9ed8023dcabf2942d80511eef1838149c7224de625be",
     "NEXT_PUBLIC_VERCEL_ENV": "production"
   },
-  "regions": ["iad1"],
   "build": {
     "env": {
       "NEXTAUTH_URL": "$NEXTAUTH_URL",
