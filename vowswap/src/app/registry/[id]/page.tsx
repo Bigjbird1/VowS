@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
@@ -6,11 +7,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Registry, RegistryItemWithProduct } from "@/types/registry"
 
-interface RegistryPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+type RegistryPageProps = {
+  params: Promise<{ id: string }>;
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
 type PrismaProduct = {
   id: string
@@ -45,7 +45,7 @@ function isValidRegistryItem(
 export async function generateMetadata({
   params,
 }: RegistryPageProps): Promise<Metadata> {
-  const resolvedParams = await params
+  const resolvedParams = await params;
   const registry = await prisma.registry.findUnique({
     where: { id: resolvedParams.id },
     select: { title: true, description: true },
@@ -64,7 +64,7 @@ export async function generateMetadata({
 }
 
 export default async function RegistryPage({ params }: RegistryPageProps) {
-  const resolvedParams = await params
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions)
   const registry = await prisma.registry.findUnique({
     where: { id: resolvedParams.id },

@@ -5,10 +5,10 @@ import { prisma } from "@/lib/prisma";
 import OrdersList from "@/components/orders/OrdersList";
 
 interface OrdersPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     limit?: string;
-  };
+  }>;
 }
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
@@ -18,8 +18,9 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     redirect("/auth/signin");
   }
 
-  const page = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "10");
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams.page || "1");
+  const limit = parseInt(resolvedSearchParams.limit || "10");
   const skip = (page - 1) * limit;
 
   const [orders, total] = await Promise.all([

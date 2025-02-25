@@ -14,11 +14,10 @@ export const metadata: Metadata = {
   description: "Manage your wishlist on VowSwap",
 }
 
-interface WishlistPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+type WishlistPageProps = {
+  params: Promise<{ id: string }>;
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
 interface WishlistViewData {
   id: string
@@ -33,7 +32,7 @@ interface WishlistViewData {
 }
 
 export default async function WishlistPage({ params }: WishlistPageProps) {
-  const resolvedParams = await params
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions)
 
   if (!session?.user) {
